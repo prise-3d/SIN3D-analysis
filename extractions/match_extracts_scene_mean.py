@@ -63,6 +63,10 @@ def main():
     print(query)
 
 
+    res = db.datas.find(query)
+
+    all_experiment_thresholds = []
+
     for cursor in res:
         user_data = cursor['data']
         user_id = user_data['userId']
@@ -71,7 +75,10 @@ def main():
         for id, val in enumerate(user_data['msg']['extracts']):
             experiment_user_thresholds.append(val['quality'])
 
-        print(user_id, experiment_user_thresholds)
+        all_experiment_thresholds.append(experiment_user_thresholds)
+
+    # TODO : Voir pour sauvegarde des fichiers et applications des stats sur les résultats obtenus
+    print(np.mean(all_experiment_thresholds, axis=0))
 
 if __name__== "__main__":
     main()
