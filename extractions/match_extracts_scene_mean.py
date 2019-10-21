@@ -1,7 +1,7 @@
 # main imports
 import argparse
 import numpy as np
-import sys
+import sys, os
 
 # mongo import
 from pymongo import MongoClient
@@ -18,7 +18,7 @@ def main():
 
     parser.add_argument('--expeId', type=str, help='Experiment identifier')
     parser.add_argument('--experiment', type=str, help='Experiment name', choices=cfg.experiment_list, required=True)
-    parser.add_argument('--scene', type=str, help='Scene identifier to use', choices=cfg.scenes_indices)
+    parser.add_argument('--scene', type=str, help='Scene identifier to use', choices=cfg.scenes_indices, required=True)
 
     args = parser.parse_args()
 
@@ -40,27 +40,34 @@ def main():
         print("Expe id used", p_expe_id)
         query['data.experimentId'] = p_expe_id
 
-    if p_scene:
+    index = cfg.scenes_indices.index(p_scene.strip())
+    scene_name = cfg.scenes_names[index]
 
-        index = cfg.scenes_indices.index(p_scene.strip())
-        scene_name = cfg.scenes_names[index]
+    # from dataset retrieve human thresholds for each zone  
+    zone_thresholds = []
+    scene_folder = os.path.join(cfg.dataset_path, scene_name)
+    zone_folders = sorted([zone for zone in os.listdir(scene_folder) if 'zone' in zone])
+    
+    for zone in zone_folders:
+        threshold_file_path = os.path.join(scene_folder, zone, cfg.seuil_expe_filename)
 
-        print("Scene used", scene_name)
-        query['data.msg.sceneName'] = scene_name
+        with open(threshold_file_path, 'r') as f:
+            current_threshold = int(f.readline())
+            zone_thresholds.append(current_threshold)
+    
+    print(zone_thresholds)
+
+    print("Scene used", scene_name)
+    query['data.msg.sceneName'] = scene_name
 
     print(query)
 
-    res = db.datas.find(query)
-
-    zone_index = np.arange(16)
-    threshold_img = (zone_index / 15) * 100
 
     for cursor in res:
         user_data = cursor['data']
         user_id = user_data['userId']
 
         experiment_user_thresholds = []
-        experiment_error_thresholds = []
         for id, val in enumerate(user_data['msg']['extracts']):
             experiment_user_thresholds.append(val['quality'])
 
