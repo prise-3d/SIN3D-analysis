@@ -22,13 +22,12 @@ def main():
 
     p_expe_id = args.expeId
 
-
     # connect to Mongo db and collect data
     client = MongoClient(cfg.default_host)
     db = client.sin3d
 
     query = {
-        'data.msg.experimentName': "CalibrationMeasurement", 
+        'data.msg.experimentName': "CalibrationMeasurement",
         'data.msgId': "EXPERIMENT_VALIDATED"
     }
 
@@ -52,11 +51,18 @@ def main():
 
         experiment_user_thresholds = []
         experiment_error_thresholds = []
-        for id, val in enumerate(user_data['msg']['extracts']):
+        for val in user_data['msg']['extracts']:
+            threshold_id = int(val['index'])
             experiment_user_thresholds.append(val['quality'])
-            experiment_error_thresholds.append((int(val['quality'] - threshold_img[id])))
+            error = (val['quality'] - threshold_img[threshold_id])
+            error_squared = error * error
+            experiment_error_thresholds.append(error_squared)
 
-        print(user_id, experiment_user_thresholds, experiment_error_thresholds, np.mean(experiment_error_thresholds))
+        print('----------------------------------------------')
+        print('User', user_id)
+        print(experiment_user_thresholds)
+        print(list(map(lambda x: str('%.2f' % x), experiment_error_thresholds)))
+        print(np.mean(experiment_error_thresholds))
 
 if __name__== "__main__":
     main()
