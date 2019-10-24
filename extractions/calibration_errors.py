@@ -50,19 +50,22 @@ def main():
         user_id = user_data['userId']
 
         experiment_user_thresholds = []
+        experiment_user_zone = []
         experiment_error_thresholds = []
         for val in user_data['msg']['extracts']:
-            threshold_id = int(val['index'])
+            zone_id = int(val['zone']) - 1
             experiment_user_thresholds.append(val['quality'])
-            error = (val['quality'] - threshold_img[threshold_id])
+            error = (val['quality'] - threshold_img[zone_id])
             error_squared = error * error
+            experiment_user_zone.append(zone_id)
             experiment_error_thresholds.append(error_squared)
 
         print('----------------------------------------------')
         print('User', user_id)
-        print(experiment_user_thresholds)
-        print(list(map(lambda x: str('%.2f' % x), experiment_error_thresholds)))
-        print(np.mean(experiment_error_thresholds))
+        print('zone id', experiment_user_zone)
+        print('Estimated', experiment_user_thresholds)
+        print('Squared error', list(map(lambda x: str('%.2f' % x), experiment_error_thresholds)))
+        print('Mean squared error', np.mean(experiment_error_thresholds))
 
 if __name__== "__main__":
     main()
